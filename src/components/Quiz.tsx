@@ -37,7 +37,7 @@ const questions = [
   }
 ];
 
-export const Quiz: React.FC = () => {
+export const Quiz: React.FC<{ setActiveView: (v: 'learning' | 'timeline' | 'quiz') => void }> = ({ setActiveView }) => {
   const { language, setQuizScore } = useAppContext();
   const t = translations[language];
   
@@ -71,6 +71,8 @@ export const Quiz: React.FC = () => {
   const currentQ = questions[currentQIndex];
 
   if (isFinished) {
+    const isHighScore = score >= Math.ceil(questions.length / 2);
+
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center p-8 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
@@ -86,22 +88,42 @@ export const Quiz: React.FC = () => {
             <Trophy size={56} strokeWidth={1.5} />
           </div>
           <h2 className="text-4xl font-extrabold mb-4 tracking-tight">{t.quizCompleted}</h2>
-          <p className="text-xl text-foreground/70 mb-10 font-medium">
+          <p className="text-xl text-foreground/70 mb-4 font-medium">
             {t.youScored} <span className="text-primary font-bold text-2xl">{score}</span> {t.outOf} {questions.length}
           </p>
           
-          <button
-            onClick={() => {
-              setCurrentQIndex(0);
-              setScore(0);
-              setIsFinished(false);
-              setSelectedOption(null);
-              setIsAnswered(false);
-            }}
-            className="w-full bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all"
-          >
-            {t.retakeQuiz}
-          </button>
+          <p className="text-lg text-foreground/60 mb-10 font-semibold">
+            {isHighScore ? t.quizFeedbackHigh : t.quizFeedbackLow}
+          </p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setCurrentQIndex(0);
+                setScore(0);
+                setIsFinished(false);
+                setSelectedOption(null);
+                setIsAnswered(false);
+              }}
+              className="w-full bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all"
+            >
+              {t.retakeQuiz}
+            </button>
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={() => setActiveView('learning')}
+                className="flex-1 bg-secondary text-foreground px-4 py-3 rounded-xl font-bold shadow-md hover:bg-border transition-colors"
+              >
+                {t.restartLearning}
+              </button>
+              <button
+                onClick={() => setActiveView('timeline')}
+                className="flex-1 bg-secondary text-foreground px-4 py-3 rounded-xl font-bold shadow-md hover:bg-border transition-colors"
+              >
+                {t.goToTimeline}
+              </button>
+            </div>
+          </div>
         </motion.div>
       </div>
     );

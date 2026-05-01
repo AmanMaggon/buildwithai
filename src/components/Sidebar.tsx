@@ -27,11 +27,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
   return (
     <div className="w-[280px] h-screen bg-card text-card-foreground border-r border-border p-6 flex flex-col justify-between shrink-0 shadow-lg shadow-black/5 z-10">
       <div>
-        <div className="flex items-center gap-3 mb-10 pl-2">
+        <div className="flex items-center gap-3 mb-6 pl-2">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
             E
           </div>
           <h1 className="text-xl font-extrabold tracking-tight">ElectraGuide</h1>
+        </div>
+
+        {/* Language Mode Indicator */}
+        <div className="mb-8 pl-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/80 border border-border text-xs font-semibold text-foreground/70">
+            {language === 'en' ? t.englishModeOn : t.hindiModeOn}
+          </div>
         </div>
 
         <nav className="space-y-2">

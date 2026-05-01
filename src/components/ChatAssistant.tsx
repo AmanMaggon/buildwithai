@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Mic, Sparkles } from 'lucide-react';
+import { Send, Mic, Sparkles, Volume2, Square } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 import { electionSteps } from '../data/electionSteps';
 import { translations } from '../data/translations';
@@ -24,36 +25,56 @@ export const ChatAssistant: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
 
-    const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: input };
+  const handleSend = (overrideText?: string) => {
+    const textToSend = overrideText || input;
+    if (!textToSend.trim()) return;
+
+    const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: textToSend };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setIsTyping(true);
 
-    // Enhanced Mock AI Response Logic with better intent detection
     setTimeout(() => {
       let aiText = '';
       const lowercaseInput = userMessage.text.toLowerCase();
+      const stepContext = `${t.step} ${activeStep + 1}: ${currentStepData.title}`;
 
       if (lowercaseInput.includes('10') || lowercaseInput.includes('kid') || lowercaseInput.includes('child')) {
-        aiText = `Think of "${currentStepData.title}" like this: Imagine you and your friends are picking a team captain. ${currentStepData.shortDescription} It's just like that, but for the whole country!`;
-      } else if (lowercaseInput.includes('simple') || lowercaseInput.includes('short') || lowercaseInput.includes('brief')) {
-        aiText = `Simply put: ${currentStepData.shortDescription}`;
-      } else if (lowercaseInput.includes('detail') || lowercaseInput.includes('more') || lowercaseInput.includes('explain')) {
-        aiText = `Here's a detailed breakdown of ${currentStepData.title}: ${currentStepData.detailedExplanation}`;
+        aiText = `Think of "${stepContext}" like this: Imagine you and your friends are picking a team captain. ${currentStepData.shortDescription} It's just like that, but for the whole country!`;
+      } else if (lowercaseInput.includes('simple') || lowercaseInput.includes('short') || lowercaseInput.includes('brief') || lowercaseInput.includes('सरल')) {
+        aiText = `Simply put (${stepContext}): ${currentStepData.shortDescription}`;
+      } else if (lowercaseInput.includes('detail') || lowercaseInput.includes('more') || lowercaseInput.includes('explain') || lowercaseInput.includes('विस्तार')) {
+        aiText = `Here's a detailed breakdown of ${stepContext}: ${currentStepData.detailedExplanation}`;
       } else {
-        aiText = `I see you're asking about ${currentStepData.title}. ${currentStepData.shortDescription} To learn more, you can ask me for details, or ask me to explain it simply!`;
+        aiText = `I see you're asking about ${stepContext}. ${currentStepData.shortDescription}`;
+      }
+
+      // Add continuity hint
+      if (activeStep < electionSteps.length - 1 && !lowercaseInput.includes('10')) {
+        const nextStepTitle = electionSteps[activeStep + 1].title;
+        aiText += language === 'en' 
+          ? ` Up next is: ${nextStepTitle}.` 
+          : ` अगला चरण है: ${nextStepTitle}.`;
       }
 
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: aiText }]);
-    }, 800);
+      setIsTyping(false);
+    }, 1200);
   };
 
   const toggleListen = () => {
@@ -99,6 +120,24 @@ export const ChatAssistant: React.FC = () => {
     }
   };
 
+  const toggleSpeech = (msgId: string, text: string) => {
+    if (speakingMsgId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language === 'en' ? 'en-US' : 'hi-IN';
+    
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="flex flex-col h-full bg-card relative">
       {/* Header */}
@@ -114,35 +153,96 @@ export const ChatAssistant: React.FC = () => {
 
       {/* Messages */}
       <div className="flex-1 p-5 overflow-y-auto space-y-5">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-          >
-            <div
-              className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                msg.sender === 'user'
-                  ? 'bg-primary text-white rounded-tr-sm shadow-primary/20'
-                  : 'bg-secondary border border-border/50 text-foreground rounded-tl-sm'
-              }`}
+        <AnimatePresence initial={false}>
+          {messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
             >
-              {msg.text}
-            </div>
-            <span className="text-[10px] font-medium text-foreground/40 mt-1.5 px-1">
-              {msg.sender === 'user' ? t.you : t.ai}
-            </span>
-          </div>
-        ))}
+              <div
+                className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm relative group ${
+                  msg.sender === 'user'
+                    ? 'bg-primary text-white rounded-tr-sm shadow-primary/20'
+                    : 'bg-secondary border border-border/50 text-foreground rounded-tl-sm'
+                }`}
+              >
+                {msg.text}
+                
+                {/* TTS Button for AI messages */}
+                {msg.sender === 'ai' && (
+                  <button
+                    onClick={() => toggleSpeech(msg.id, msg.text)}
+                    className="absolute -right-8 bottom-0 p-1.5 rounded-full text-foreground/40 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+                    title={speakingMsgId === msg.id ? t.stopListen : t.listen}
+                  >
+                    {speakingMsgId === msg.id ? <Square size={14} className="fill-current text-red-500" /> : <Volume2 size={14} />}
+                  </button>
+                )}
+              </div>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-foreground/40 mt-1.5 px-1">
+                {msg.sender === 'user' ? t.you : t.ai}
+              </span>
+            </motion.div>
+          ))}
+          
+          {/* Thinking State */}
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-start"
+            >
+              <div className="max-w-[85%] p-4 rounded-2xl bg-secondary border border-border/50 text-foreground rounded-tl-sm shadow-sm flex items-center gap-1.5">
+                <motion.div className="w-1.5 h-1.5 bg-primary rounded-full" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
+                <motion.div className="w-1.5 h-1.5 bg-primary rounded-full" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
+                <motion.div className="w-1.5 h-1.5 bg-primary rounded-full" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
+              </div>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-foreground/40 mt-1.5 px-1">
+                {t.thinking}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div ref={messagesEndRef} className="h-2" />
       </div>
 
-      {/* Input Box */}
-      <div className="p-4 border-t border-border bg-card/80 backdrop-blur-md">
+      {/* Input Area */}
+      <div className="p-4 border-t border-border bg-card/80 backdrop-blur-md flex flex-col gap-3">
+        {/* Quick Action Buttons */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button 
+            onClick={() => handleSend(t.explainSimply)}
+            disabled={isTyping}
+            className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
+          >
+            {t.explainSimply}
+          </button>
+          <button 
+            onClick={() => handleSend(t.explainDetail)}
+            disabled={isTyping}
+            className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
+          >
+            {t.explainDetail}
+          </button>
+          <button 
+            onClick={() => handleSend(t.explainKid)}
+            disabled={isTyping}
+            className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
+          >
+            {t.explainKid}
+          </button>
+        </div>
+
         <div className="flex items-center gap-2 bg-secondary/80 rounded-2xl p-2 border border-border focus-within:border-primary/50 focus-within:bg-secondary transition-all shadow-inner">
           <button
             onClick={toggleListen}
+            disabled={isTyping}
             className={`p-2.5 rounded-xl transition-colors ${
-              isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'text-foreground/50 hover:bg-card hover:text-foreground hover:shadow-sm'
+              isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'text-foreground/50 hover:bg-card hover:text-foreground hover:shadow-sm disabled:opacity-50'
             }`}
             title="Speech to Text"
           >
@@ -153,12 +253,13 @@ export const ChatAssistant: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            disabled={isTyping}
             placeholder={t.askSomething}
-            className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium placeholder:text-foreground/40"
+            className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium placeholder:text-foreground/40 disabled:opacity-50"
           />
           <button
-            onClick={handleSend}
-            disabled={!input.trim()}
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isTyping}
             className="p-2.5 bg-primary text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20 hover:shadow-primary/40"
           >
             <Send size={18} />

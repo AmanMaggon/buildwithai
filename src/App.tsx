@@ -20,7 +20,7 @@ function App() {
           {activeView === 'landing' && <Landing onStart={() => setActiveView('learning')} />}
           {activeView === 'learning' && <LearningFlow />}
           {activeView === 'timeline' && <Timeline />}
-          {activeView === 'quiz' && <Quiz />}
+          {activeView === 'quiz' && <Quiz setActiveView={setActiveView as any} />}
         </div>
       </main>
 
