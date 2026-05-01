@@ -113,3 +113,11 @@ The application successfully demonstrates:
 * Clean, maintainable, and modular code
 
 This solution delivers a polished, reliable, and engaging experience aligned with all challenge expectations.
+
+---
+
+## 🚀 Deployment
+
+The application is deployed using Vercel for fast and reliable hosting.
+
+Due to billing constraints with Google Cloud Run, the project uses a lightweight deployment approach while still integrating Google technologies via browser-based APIs (Web Speech API).
