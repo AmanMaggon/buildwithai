@@ -106,11 +106,13 @@ export const ChatAssistant: React.FC = () => {
       };
 
       recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
+        console.warn("Speech recognition error:", event.error);
         if (event.error === 'not-allowed') {
-          alert("Microphone access denied. Please grant microphone permissions to use voice input.");
+          alert("Microphone access denied. Please grant microphone permissions in your browser settings to use voice input.");
         } else if (event.error === 'network') {
-          alert("Network error occurred during speech recognition. Please check your connection.");
+          // Many browsers (Brave, Firefox) or privacy extensions block Google's speech servers.
+          // Instead of throwing an intrusive alert, we just log it and reset the state.
+          console.warn("Network error during speech recognition. This is often caused by privacy blockers or using a non-Chrome browser.");
         }
         setIsListening(false);
       };
