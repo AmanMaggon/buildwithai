@@ -71,7 +71,10 @@ export const Quiz: React.FC<{ setActiveView: (v: 'learning' | 'timeline' | 'quiz
   const currentQ = questions[currentQIndex];
 
   if (isFinished) {
-    const isHighScore = score >= Math.ceil(questions.length / 2);
+    const percentage = Math.round((score / questions.length) * 100);
+    let feedbackText = t.quizFeedbackLow;
+    if (percentage >= 80) feedbackText = t.quizFeedbackHigh;
+    else if (percentage >= 50) feedbackText = t.quizFeedbackMedium;
 
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center p-8 relative overflow-hidden">
@@ -88,12 +91,13 @@ export const Quiz: React.FC<{ setActiveView: (v: 'learning' | 'timeline' | 'quiz
             <Trophy size={56} strokeWidth={1.5} />
           </div>
           <h2 className="text-4xl font-extrabold mb-4 tracking-tight">{t.quizCompleted}</h2>
-          <p className="text-xl text-foreground/70 mb-4 font-medium">
+          <p className="text-xl text-foreground/70 mb-2 font-medium">
             {t.youScored} <span className="text-primary font-bold text-2xl">{score}</span> {t.outOf} {questions.length}
           </p>
+          <p className="text-3xl font-extrabold text-primary mb-6">{percentage}%</p>
           
           <p className="text-lg text-foreground/60 mb-10 font-semibold">
-            {isHighScore ? t.quizFeedbackHigh : t.quizFeedbackLow}
+            {feedbackText}
           </p>
           
           <div className="space-y-3">

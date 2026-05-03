@@ -70,6 +70,10 @@ export const LearningFlow: React.FC = () => {
                 {step.detailedExplanation}
               </p>
             </div>
+            
+            <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-8 opacity-70 animate-pulse">
+              {t.swipeHint}
+            </p>
           </motion.div>
         </AnimatePresence>
       </div>

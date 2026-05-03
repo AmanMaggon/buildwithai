@@ -12,7 +12,7 @@ type Message = {
 };
 
 export const ChatAssistant: React.FC = () => {
-  const { activeStep, language } = useAppContext();
+  const { activeStep, setActiveStep, language } = useAppContext();
   const t = translations[language];
   const currentStepData = electionSteps[activeStep];
 
@@ -70,6 +70,11 @@ export const ChatAssistant: React.FC = () => {
         aiText += language === 'en' 
           ? ` Up next is: ${nextStepTitle}.` 
           : ` अगला चरण है: ${nextStepTitle}.`;
+      }
+
+      // Add conversational follow-up randomly (approx 40% of the time)
+      if (Math.random() > 0.6 && !lowercaseInput.includes('simple')) {
+        aiText += ` ${Math.random() > 0.5 ? t.followUpSimple : t.followUpNext}`;
       }
 
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: aiText }]);
@@ -235,16 +240,41 @@ export const ChatAssistant: React.FC = () => {
           >
             {t.explainKid}
           </button>
+          
+          {/* Navigation Controls */}
+          {activeStep > 0 && (
+            <button 
+              onClick={() => setActiveStep(activeStep - 1)}
+              disabled={isTyping}
+              className="whitespace-nowrap px-3 py-1.5 bg-secondary/50 hover:bg-border border border-border text-foreground/70 text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
+            >
+              ⬅️ {t.previous}
+            </button>
+          )}
+          {activeStep < electionSteps.length - 1 && (
+            <button 
+              onClick={() => setActiveStep(activeStep + 1)}
+              disabled={isTyping}
+              className="whitespace-nowrap px-3 py-1.5 bg-secondary/50 hover:bg-border border border-border text-foreground/70 text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
+            >
+              {t.nextStep} ➡️
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 bg-secondary/80 rounded-2xl p-2 border border-border focus-within:border-primary/50 focus-within:bg-secondary transition-all shadow-inner">
+        <div className="flex items-center gap-2 bg-secondary/80 rounded-2xl p-2 border border-border focus-within:border-primary/50 focus-within:bg-secondary transition-all shadow-inner relative">
+          {isListening && (
+            <div className="absolute -top-8 left-2 bg-card border border-border text-xs font-bold px-3 py-1.5 rounded-full shadow-lg text-primary animate-bounce">
+              {t.listening}
+            </div>
+          )}
           <button
             onClick={toggleListen}
             disabled={isTyping}
             className={`p-2.5 rounded-xl transition-colors ${
               isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'text-foreground/50 hover:bg-card hover:text-foreground hover:shadow-sm disabled:opacity-50'
             }`}
-            title="Speech to Text"
+            title={t.useVoice}
           >
             <Mic size={18} />
           </button>
