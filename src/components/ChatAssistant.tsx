@@ -95,14 +95,17 @@ export const ChatAssistant: React.FC = () => {
       const recognition = new SpeechRecognition();
       
       recognition.lang = language === 'en' ? 'en-US' : 'hi-IN';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => setIsListening(true);
       
       recognition.onresult = (event: any) => {
-        const speechResult = event.results[0][0].transcript;
-        setInput(speechResult);
+        let currentTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        setInput(currentTranscript);
       };
 
       recognition.onerror = (event: any) => {
