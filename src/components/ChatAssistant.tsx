@@ -27,7 +27,7 @@ export const ChatAssistant: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,8 +67,8 @@ export const ChatAssistant: React.FC = () => {
       // Add continuity hint
       if (activeStep < electionSteps.length - 1 && !lowercaseInput.includes('10')) {
         const nextStepTitle = electionSteps[activeStep + 1].title;
-        aiText += language === 'en' 
-          ? ` Up next is: ${nextStepTitle}.` 
+        aiText += language === 'en'
+          ? ` Up next is: ${nextStepTitle}.`
           : ` अगला चरण है: ${nextStepTitle}.`;
       }
 
@@ -93,13 +93,13 @@ export const ChatAssistant: React.FC = () => {
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-      
+
       recognition.lang = language === 'en' ? 'en-US' : 'hi-IN';
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => setIsListening(true);
-      
+
       recognition.onresult = (event: any) => {
         let currentTranscript = '';
         for (let i = 0; i < event.results.length; i++) {
@@ -140,7 +140,7 @@ export const ChatAssistant: React.FC = () => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = language === 'en' ? 'en-US' : 'hi-IN';
-    
+
     utterance.onend = () => setSpeakingMsgId(null);
     utterance.onerror = () => setSpeakingMsgId(null);
 
@@ -173,14 +173,13 @@ export const ChatAssistant: React.FC = () => {
               className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
             >
               <div
-                className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm relative group ${
-                  msg.sender === 'user'
+                className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm relative group ${msg.sender === 'user'
                     ? 'bg-primary text-white rounded-tr-sm shadow-primary/20'
                     : 'bg-secondary border border-border/50 text-foreground rounded-tl-sm'
-                }`}
+                  }`}
               >
                 {msg.text}
-                
+
                 {/* TTS Button for AI messages */}
                 {msg.sender === 'ai' && (
                   <button
@@ -197,7 +196,7 @@ export const ChatAssistant: React.FC = () => {
               </span>
             </motion.div>
           ))}
-          
+
           {/* Thinking State */}
           {isTyping && (
             <motion.div
@@ -224,31 +223,31 @@ export const ChatAssistant: React.FC = () => {
       <div className="p-4 border-t border-border bg-card/80 backdrop-blur-md flex flex-col gap-3">
         {/* Quick Action Buttons */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <button 
+          <button
             onClick={() => handleSend(t.explainSimply)}
             disabled={isTyping}
             className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
           >
             {t.explainSimply}
           </button>
-          <button 
+          <button
             onClick={() => handleSend(t.explainDetail)}
             disabled={isTyping}
             className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
           >
             {t.explainDetail}
           </button>
-          <button 
+          <button
             onClick={() => handleSend(t.explainKid)}
             disabled={isTyping}
             className="whitespace-nowrap px-3 py-1.5 bg-secondary hover:bg-primary/10 border border-border hover:border-primary/30 text-foreground/80 hover:text-primary text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
           >
             {t.explainKid}
           </button>
-          
+
           {/* Navigation Controls */}
           {activeStep > 0 && (
-            <button 
+            <button
               onClick={() => setActiveStep(activeStep - 1)}
               disabled={isTyping}
               className="whitespace-nowrap px-3 py-1.5 bg-secondary/50 hover:bg-border border border-border text-foreground/70 text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
@@ -257,7 +256,7 @@ export const ChatAssistant: React.FC = () => {
             </button>
           )}
           {activeStep < electionSteps.length - 1 && (
-            <button 
+            <button
               onClick={() => setActiveStep(activeStep + 1)}
               disabled={isTyping}
               className="whitespace-nowrap px-3 py-1.5 bg-secondary/50 hover:bg-border border border-border text-foreground/70 text-xs font-semibold rounded-full transition-colors disabled:opacity-50"
@@ -276,9 +275,8 @@ export const ChatAssistant: React.FC = () => {
           <button
             onClick={toggleListen}
             disabled={isTyping}
-            className={`p-2.5 rounded-xl transition-colors ${
-              isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'text-foreground/50 hover:bg-card hover:text-foreground hover:shadow-sm disabled:opacity-50'
-            }`}
+            className={`p-2.5 rounded-xl transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'text-foreground/50 hover:bg-card hover:text-foreground hover:shadow-sm disabled:opacity-50'
+              }`}
             title={t.useVoice}
           >
             <Mic size={18} />
